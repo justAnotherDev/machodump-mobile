@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"fmt"
-	"redmapletech/machodump/entitlements"
+	"justAnotherDev/machodump-mobile/entitlements"
 	"strings"
 	"unicode"
 
@@ -13,9 +13,9 @@ import (
 	ctypes "github.com/blacktop/go-macho/pkg/codesign/types"
 )
 
-// PrintFileDetails prints the general file details to console
-func PrintFileDetails(m *macho.File) {
-	fmt.Printf("File Details:\n"+
+// GetFileDetails gets the general file details to console
+func GetFileDetails(m *macho.File)(string) {
+	return fmt.Sprintf("File Details:\n"+
 		"\tMagic: %s\n"+
 		"\tType: %s\n"+
 		"\tCPU: %s, %s\n"+
@@ -31,18 +31,20 @@ func PrintFileDetails(m *macho.File) {
 		m.UUID())
 }
 
-// PrintLibs prints the loaded libraries to console
-func PrintLibs(libs []string) {
-	fmt.Printf("File imports %s\n", english.Plural(len(libs), "library:", "libraries:"))
+// GetLibs gets the loaded libraries to console
+func GetLibs(libs []string)(string) {
+	output := fmt.Sprintf("File imports %s\n", english.Plural(len(libs), "library:", "libraries:"))
 
 	for i, lib := range libs {
-		fmt.Printf("\t%d: %q\n", i, lib)
+		output += fmt.Sprintf("\t%d: %q\n", i, lib)
 	}
+
+	return output
 }
 
-// PrintLoads prints the interesting load commands to console
-func PrintLoads(loads []macho.Load) {
-	fmt.Printf("File has %s. Interesting %s:\n", english.Plural(len(loads), "load command", "load commands"), english.PluralWord(len(loads), "command", "commands"))
+// GetLoads gets the interesting load commands to console
+func GetLoads(loads []macho.Load)(string) {
+	output := fmt.Sprintf("File has %s. Interesting %s:\n", english.Plural(len(loads), "load command", "load commands"), english.PluralWord(len(loads), "command", "commands"))
 
 	for i, load := range loads {
 		switch load.Command() {
@@ -53,59 +55,64 @@ func PrintLoads(loads []macho.Load) {
 		case types.LC_ENCRYPTION_INFO_64:
 			fallthrough
 		case types.LC_SOURCE_VERSION:
-			fmt.Printf("\tLoad %d (%s): %s\n", i, load.Command(), load.String())
+			output += fmt.Sprintf("\tLoad %d (%s): %s\n", i, load.Command(), load.String())
 		}
 	}
+
+	return output
 }
 
-// PrintCDs prints the code directory details to console
-func PrintCDs(CDs []ctypes.CodeDirectory) {
-	fmt.Printf("Binary has %s:\n", english.Plural(len(CDs), "Code Directory", "Code Directories"))
+// GetCDs gets the code directory details to console
+func GetCDs(CDs []ctypes.CodeDirectory)(string) {
+	output := fmt.Sprintf("Binary has %s:\n", english.Plural(len(CDs), "Code Directory", "Code Directories"))
 
 	for i, dir := range CDs {
-		fmt.Printf("\tCodeDirectory %d:\n", i)
+		output += fmt.Sprintf("\tCodeDirectory %d:\n", i)
 
-		fmt.Printf("\t\tIdent: \"%s\"\n", dir.ID)
+		output += fmt.Sprintf("\t\tIdent: \"%s\"\n", dir.ID)
 
 		if len(dir.TeamID) > 0 && isASCII(dir.TeamID) {
-			fmt.Printf("\t\tTeam ID: %q\n", dir.TeamID)
+			output += fmt.Sprintf("\t\tTeam ID: %q\n", dir.TeamID)
 		}
 
-		fmt.Printf("\t\tCD Hash: %s\n", dir.CDHash)
-		fmt.Printf("\t\tCode slots: %d\n", len(dir.CodeSlots))
-		fmt.Printf("\t\tSpecial slots: %d\n", len(dir.SpecialSlots))
+		output += fmt.Sprintf("\t\tCD Hash: %s\n", dir.CDHash)
+		output += fmt.Sprintf("\t\tCode slots: %d\n", len(dir.CodeSlots))
+		output += fmt.Sprintf("\t\tSpecial slots: %d\n", len(dir.SpecialSlots))
 
 		for _, slot := range dir.SpecialSlots {
-			fmt.Printf("\t\t\t%s\n", slot.Desc)
+			output += fmt.Sprintf("\t\t\t%s\n", slot.Desc)
 		}
 	}
+
+	return output
 }
 
-// PrintRequirements prints the requirement sections to console
-func PrintRequirements(reqs []ctypes.Requirement) {
-	fmt.Printf("Binary has %s:\n", english.Plural(len(reqs), "requirement", "requirements"))
+// GetRequirements gets the requirement sections to console
+func GetRequirements(reqs []ctypes.Requirement)(string) {
+	output := fmt.Sprintf("Binary has %s:\n", english.Plural(len(reqs), "requirement", "requirements"))
 
 	for i, req := range reqs {
-		fmt.Printf("\tRequirement %d (%s): %s\n", i, req.Type, req.Detail)
+		output += fmt.Sprintf("\tRequirement %d (%s): %s\n", i, req.Type, req.Detail)
 	}
+
+	return output
 }
 
-// PrintEnts prints the entitlements to console
-func PrintEnts(ents *entitlements.EntsStruct) {
+// GetEnts gets the entitlements to console
+func GetEnts(ents *entitlements.EntsStruct)(string) {
 
 	if ents == nil {
-		fmt.Printf("Binary has no entitlements\n")
-		return
+		return "Binary has no entitlements\n"
 	}
 
 	entries := false
-
+	output := ""
 	// print the boolean entries
 	if ents.BooleanValues != nil && len(ents.BooleanValues) > 0 {
-		fmt.Printf("Binary has %s:\n", english.Plural(len(ents.BooleanValues), "boolean entitlement", "boolean entitlements"))
+		output += fmt.Sprintf("Binary has %s:\n", english.Plural(len(ents.BooleanValues), "boolean entitlement", "boolean entitlements"))
 
 		for _, ent := range ents.BooleanValues {
-			fmt.Printf("\t%s: %t\n", ent.Name, ent.Value)
+			output += fmt.Sprintf("\t%s: %t\n", ent.Name, ent.Value)
 		}
 
 		entries = true
@@ -113,10 +120,10 @@ func PrintEnts(ents *entitlements.EntsStruct) {
 
 	// print the string entries
 	if ents.StringValues != nil && len(ents.StringValues) > 0 {
-		fmt.Printf("Binary has %s:\n", english.Plural(len(ents.StringValues), "string entitlement", "string entitlements"))
+		output += fmt.Sprintf("Binary has %s:\n", english.Plural(len(ents.StringValues), "string entitlement", "string entitlements"))
 
 		for i, ent := range ents.StringValues {
-			fmt.Printf("\t%d %s: %q\n", i, ent.Name, ent.Value)
+			output += fmt.Sprintf("\t%d %s: %q\n", i, ent.Name, ent.Value)
 		}
 
 		entries = true
@@ -124,10 +131,10 @@ func PrintEnts(ents *entitlements.EntsStruct) {
 
 	// print the integer entries
 	if ents.IntegerValues != nil && len(ents.IntegerValues) > 0 {
-		fmt.Printf("Binary has %s:\n", english.Plural(len(ents.IntegerValues), "integer entitlement", "integer entitlements"))
+		output += fmt.Sprintf("Binary has %s:\n", english.Plural(len(ents.IntegerValues), "integer entitlement", "integer entitlements"))
 
 		for i, ent := range ents.IntegerValues {
-			fmt.Printf("\t%d %s: %d\n", i, ent.Name, ent.Value)
+			output += fmt.Sprintf("\t%d %s: %d\n", i, ent.Name, ent.Value)
 		}
 
 		entries = true
@@ -135,7 +142,7 @@ func PrintEnts(ents *entitlements.EntsStruct) {
 
 	// print the string array entries
 	if ents.StringArrayValues != nil && len(ents.StringArrayValues) > 0 {
-		fmt.Printf("Binary has %s:\n", english.Plural(len(ents.StringArrayValues), "string array entitlement", "string array entitlements"))
+		output += fmt.Sprintf("Binary has %s:\n", english.Plural(len(ents.StringArrayValues), "string array entitlement", "string array entitlements"))
 
 		for i, ent := range ents.StringArrayValues {
 
@@ -147,15 +154,17 @@ func PrintEnts(ents *entitlements.EntsStruct) {
 
 			valueList = strings.TrimSuffix(valueList, ", ")
 
-			fmt.Printf("\t%d %s: [%q]\n", i, ent.Name, valueList)
+			output += fmt.Sprintf("\t%d %s: [%q]\n", i, ent.Name, valueList)
 		}
 
 		entries = true
 	}
 
 	if !entries {
-		fmt.Printf("Binary has no entitlements\n")
+		output += fmt.Sprintf("Binary has no entitlements\n")
 	}
+
+	return output
 }
 
 func isASCII(s string) bool {

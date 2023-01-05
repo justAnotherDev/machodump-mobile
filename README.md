@@ -1,21 +1,22 @@
-# machodump
-Golang tool to dump useful information from a Mach-O binary. Read more on our [blog post](https://redmaple.tech/blogs/macho-files/).
+# machodump-mobile
 
-Uses the library [Go-Macho](https://github.com/blacktop/go-macho) for low-level parsing.
+**iOS framework that dumps useful information from a Mach-O binary**
 
-There is a handy [Mach-o file template](https://www.sweetscape.com/010editor/repository/files/MachO.bt) for 010 Editor.
+The dump will show imported/injected frameworks, code signing details, entitlements and more.
 
-# Build
+Wraps the Golang tool that is hosted [here](https://github.com/RedMapleTech/machodump)
 
+# Example Usage
+
+```swift
+import Macho
+
+let dumpString = MachoDumpFile(Bundle.main.path(forResource: "Chess", ofType: nil))
+print(dumpString)
 ```
-go build
-```
 
-# Example
-
+**Console:**
 ```
-./machodump -i testfiles/Chess
-2020/11/24 14:20:29 Parsing file "testfiles/Chess".
 File Details:
         Magic: 64-bit MachO
         Type: Exec
@@ -68,3 +69,12 @@ Binary has 1 string array entitlement:
         0 com.apple.private.tcc.allow: ["kTCCServiceMicrophone"]
 2020/11/24 14:20:29 Fin.
 ```
+
+# Build
+
+`gomobile bind -target=ios -x`
+
+# Setup
+
+Install `gomobile` by following the instructions listed [here](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile).
+
